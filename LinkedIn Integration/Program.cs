@@ -1,4 +1,5 @@
 using LinkedIn_Integration;
+using LinkedIn_Integration.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +10,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.Configure<LinkedInOptions>(builder.Configuration.GetSection("LinkedInOptions"));
+builder.Services.AddSingleton<ILinkedInService, LinkedInService>();
 
 var app = builder.Build();
 

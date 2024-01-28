@@ -4,7 +4,7 @@ namespace LinkedIn_Integration.Services
 {
     public interface ILinkedInService
     {
-        Task CreatePost(Post post);
+        Task<bool> CreatePost(Post post);
         Task UpdatePost(Post post);
 
         Task<bool> DeletePost(string id);
