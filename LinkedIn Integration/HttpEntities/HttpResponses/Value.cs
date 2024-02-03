@@ -1,11 +1,11 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace LinkedIn_Integration.HttpResponses
+namespace LinkedIn_Integration.HttpEntities.HttpResponses
 {
     public class Value
     {
         [JsonPropertyName("uploadUrlExpiresAt")]
-        public Int64 UploadUrlExpiresAt { get; set; }
+        public long UploadUrlExpiresAt { get; set; }
         [JsonPropertyName("uploadUrl")]
         public string UploadUrl { get; set; }
         [JsonPropertyName("image")]

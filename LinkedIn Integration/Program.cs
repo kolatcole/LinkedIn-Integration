@@ -1,5 +1,6 @@
 using LinkedIn_Integration;
 using LinkedIn_Integration.Services;
+using LinkedIn_Integration.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +11,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.Configure<LinkedInOptions>(builder.Configuration.GetSection("LinkedInOptions"));
-builder.Services.AddSingleton<ILinkedInService, LinkedInService>();
+builder.Services.AddSingleton<IPostService, PostService>();
+builder.Services.AddSingleton<ICommentService, CommentService>();
+builder.Services.AddSingleton<IReactionService, ReactionService>();
 
 var app = builder.Build();
 
