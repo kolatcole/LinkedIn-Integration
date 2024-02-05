@@ -1,4 +1,5 @@
 using LinkedIn_Integration.Entities;
+using LinkedIn_Integration.HttpEntities.HttpRequests;
 using LinkedIn_Integration.HttpEntities.HttpResponses;
 using LinkedIn_Integration.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -20,8 +21,9 @@ namespace LinkedIn_Integration.Controllers
             else if((response.StatusCode == HttpStatusCode.TooManyRequests))
                 throw new Exception("Comment create throttled: creation rate limit exceeded for member");
 
-            var commentResponse = JsonSerializer.Deserialize<CommentResponse>(await response.Content.ReadAsStringAsync());
-            return Ok(Created("", new { message = $"Comment has been created successfully for post: {postUrn} with id : {commentResponse.Id}", shareUrn = response.Headers.GetValues("x-restli-id").ToArray()[0] }));            
+            
+            var id = response.Headers.GetValues("x-restli-id").ToArray()[0];
+            return Ok(Created("", new { message = $"Comment has been created successfully for post: {postUrn} with id : {id}" }));            
         }
 
         [HttpGet]

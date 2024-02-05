@@ -57,7 +57,7 @@ namespace LinkedIn_Integration.Entities
         [JsonPropertyName("message")]
         public Message Message { get; set; }
         [JsonPropertyName("content")]
-        public CommentContent Content { get; set; }
+        public CommentContent? Content { get; set; }
     }
     public class Message
     {
