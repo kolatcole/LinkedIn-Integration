@@ -204,14 +204,43 @@ namespace LinkedIn_Integration.Services.Implementations
                     imageResponse = await GetImageUploadResponse();
                     // send a put request to uploadUrl with the filepath
 
+                    // upload from desktop
+                    //using (var imageContent = new MultipartFormDataContent())
+                    //{
+                    //    var imageUploadRequest = new HttpRequestMessage(HttpMethod.Put, imageResponse.value.UploadUrl);
+                    //    imageUploadRequest.Headers.Add("Authorization", options.Token);
+
+                    //    using (var fileStream = File.OpenRead(filePaths[0]))
+                    //    {
+                    //        imageContent.Add(new StreamContent(fileStream), "file", Path.GetFileName(filePaths[0]));
+
+                    //        imageUploadRequest.Content = imageContent;
+                    //        var imageUploadresponse = await client.SendAsync(imageUploadRequest);
+
+                    //        // Check the response
+                    //        if (imageUploadresponse.StatusCode != HttpStatusCode.Created)
+                    //        {
+                    //            throw new HttpRequestException("Unable to upload image");
+                    //        }
+                    //    }
+                    //}
+
+                    // upload from web
                     using (var imageContent = new MultipartFormDataContent())
                     {
                         var imageUploadRequest = new HttpRequestMessage(HttpMethod.Put, imageResponse.value.UploadUrl);
                         imageUploadRequest.Headers.Add("Authorization", options.Token);
 
-                        using (var fileStream = File.OpenRead(filePaths[0]))
+                        using (var fileStream =await DownloadMediaAsync(filePaths[0]))
                         {
-                            imageContent.Add(new StreamContent(fileStream), "file", Path.GetFileName(filePaths[0]));
+                            //// Download the image from the web
+                            //var imageStream = await client.GetStreamAsync(imageUrl);
+
+                            //// Add the image stream to the request
+                            //content.Add(new StreamContent(imageStream), "file", "uploadedImage.jpg");
+
+                            //var file
+                            imageContent.Add(new StreamContent(fileStream), "file", "image1.jpg");
 
                             imageUploadRequest.Content = imageContent;
                             var imageUploadresponse = await client.SendAsync(imageUploadRequest);
@@ -306,6 +335,10 @@ namespace LinkedIn_Integration.Services.Implementations
         private bool IsVideo(string path)
         {
             return path.Split(".")[1] == "mp4";
+        }
+        private async Task<Stream> DownloadMediaAsync(string url)
+        {
+            return await client.GetStreamAsync(url);
         }
     }
 }
