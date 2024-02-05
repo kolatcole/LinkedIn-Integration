@@ -5,6 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using LinkedIn_Integration.HttpEntities.HttpResponses;
 using System.Xml.Linq;
+using System.Web;
 
 namespace LinkedIn_Integration.Services.Implementations
 {
@@ -20,9 +21,9 @@ namespace LinkedIn_Integration.Services.Implementations
         private readonly LinkedInOptions options = _options.Value;
         public async Task<HttpResponseMessage> CreateComment(Comment comment, string postUrn)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{options.BaseURL}rest/socialActions/{postUrn}/comments");
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{options.BaseURL}rest/socialActions/{HttpUtility.UrlEncode(postUrn)}/comments");
             request.Headers.Add("Authorization", options.Token);
-            request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
+            request.Headers.Add("LinkedIn-Version", "202306");
             request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
 
             var content = JsonSerializer.Serialize(comment, serializeOptions);

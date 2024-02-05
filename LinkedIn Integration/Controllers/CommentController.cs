@@ -15,9 +15,9 @@ namespace LinkedIn_Integration.Controllers
         public async Task<IActionResult> Create(Comment comment, string postUrn)
         {
             var response = await service.CreateComment(comment, postUrn);
-            if (response.StatusCode != HttpStatusCode.Forbidden)
+            if (response.StatusCode == HttpStatusCode.Forbidden)
                 throw new Exception("Unpermitted fields present in REQUEST_BODY");
-            else if((response.StatusCode != HttpStatusCode.TooManyRequests))
+            else if((response.StatusCode == HttpStatusCode.TooManyRequests))
                 throw new Exception("Comment create throttled: creation rate limit exceeded for member");
 
             var commentResponse = JsonSerializer.Deserialize<CommentResponse>(await response.Content.ReadAsStringAsync());

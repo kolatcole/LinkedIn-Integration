@@ -29,13 +29,13 @@ namespace LinkedIn_Integration.Controllers
             return Ok(Created("", new { statusCode = response.StatusCode, shareUrn = response.Headers.GetValues("x-restli-id").ToArray()[0] }));
         }
         [HttpPost("Update/{Urn}")]
-        public async Task<IActionResult> Update(Post post)
+        public async Task<IActionResult> Update(PostUpdate postEntity,string Urn)
         {
-            var response = await service.UpdatePost(post,"","");
-            if (response.StatusCode != HttpStatusCode.Created)
-                throw new Exception("Reshare Failed");
+            var response = await service.UpdatePost(postEntity, Urn);
+            if (response.StatusCode != HttpStatusCode.NoContent)
+                throw new Exception("Update Failed");
             
-            return Ok(Created("", new { statusCode = response.StatusCode, message = "Successfully Reposted" }));
+            return Ok(Created("", new { statusCode = response.StatusCode, message = "Successfully Updated" }));
         }
         [HttpDelete]
         public async Task<IActionResult> Delete(string Urn)

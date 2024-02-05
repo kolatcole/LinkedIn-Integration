@@ -6,7 +6,7 @@ namespace LinkedIn_Integration.Services
     {
         Task<HttpResponseMessage> CreatePost(Post post);
         Task<HttpResponseMessage> ResharePost(Post post);
-        Task<HttpResponseMessage> UpdatePost(Post post, string shareUrn, string ugcPostUrn);
+        Task<HttpResponseMessage> UpdatePost(PostUpdate post, string urn);
 
         Task<HttpResponseMessage> DeletePost(string Urn);
 

@@ -53,7 +53,7 @@ namespace LinkedIn_Integration.Entities
         public string Actor { get; set; }
 
         [JsonPropertyName("object")]
-        public string Object { get; set; }
+        public string? Object { get; set; }
         [JsonPropertyName("message")]
         public Message Message { get; set; }
         [JsonPropertyName("content")]

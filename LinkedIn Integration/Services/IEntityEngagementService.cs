@@ -3,8 +3,8 @@ using LinkedIn_Integration.HttpEntities.HttpResponses;
 
 namespace LinkedIn_Integration.Services
 {
-    public interface IReactionService
+    public interface IEntityEngagementService
     {
-        Task<IEnumerable<Reaction>> GetReactions(string entityUrn);
+        Task<EntityEngagement> GetEngagements(string entityUrn);
     }
 }

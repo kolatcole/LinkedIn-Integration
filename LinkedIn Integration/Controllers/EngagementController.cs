@@ -7,12 +7,12 @@ namespace LinkedIn_Integration.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class ReactionController(ILogger<ReactionController> logger, IReactionService service) : ControllerBase
+    public class EngagementController(ILogger<EngagementController> logger, IEntityEngagementService service) : ControllerBase
     {
         [HttpGet]
         public async Task<IActionResult> Get(string Urn)
         {
-            var response = await service.GetReactions(Urn);
+            var response = await service.GetEngagements(Urn);
 
             return Ok(response);
         }

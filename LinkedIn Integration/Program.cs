@@ -13,7 +13,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.Configure<LinkedInOptions>(builder.Configuration.GetSection("LinkedInOptions"));
 builder.Services.AddSingleton<IPostService, PostService>();
 builder.Services.AddSingleton<ICommentService, CommentService>();
-builder.Services.AddSingleton<IReactionService, ReactionService>();
+builder.Services.AddSingleton<IEntityEngagementService, EntityEngagementService>();
 
 var app = builder.Build();
 

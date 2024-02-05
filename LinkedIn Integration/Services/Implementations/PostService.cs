@@ -51,15 +51,16 @@ namespace LinkedIn_Integration.Services.Implementations
         }
         private async Task<string> GetOwner()
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, options.BaseURL + "v2/userinfo");
-            request.Headers.Add("Authorization", options.Token);
-            request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
-            request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
+            //var request = new HttpRequestMessage(HttpMethod.Get, options.BaseURL + "v2/userinfo");
+            //request.Headers.Add("Authorization", options.Token);
+            //request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
+            //request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
 
-            var response = await Helper.ExecuteAsync(request, client).Result.Content.ReadAsStringAsync();
-            var user = JsonSerializer.Deserialize<LinkedInUser>(response);
+            //var response = await Helper.ExecuteAsync(request, client).Result.Content.ReadAsStringAsync();
+            //var user = JsonSerializer.Deserialize<LinkedInUser>(response);
 
-            return options.Owner + $"{user.Sub}";
+            //return options.Owner + $"{user.Sub}";
+            return options.Owner;
         }
         public async Task<HttpResponseMessage> CreatePost(Post post)
         {
@@ -105,7 +106,7 @@ namespace LinkedIn_Integration.Services.Implementations
         }
         public async Task<Post> GetPost(string Urn)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"{options.BaseURL}rest/posts/{HttpUtility.UrlEncode(Urn)}/?viewContext=AUTHOR");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{options.BaseURL}rest/posts/{HttpUtility.UrlEncode(Urn)}");
             request.Headers.Add("Authorization", options.Token);
             request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
             request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
@@ -114,13 +115,13 @@ namespace LinkedIn_Integration.Services.Implementations
             return JsonSerializer.Deserialize<Post>(content);
         }
 
-        public async Task<HttpResponseMessage> UpdatePost(Post post, string shareUrn, string ugcPostUrn)
+        public async Task<HttpResponseMessage> UpdatePost(PostUpdate post, string urn)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{options.BaseURL}rest/posts/{shareUrn}/{ugcPostUrn}");
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{options.BaseURL}rest/posts/{HttpUtility.UrlEncode(urn)}");
             request.Headers.Add("Authorization", options.Token);
             request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
             request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
-            request.Headers.Add("X-RestLi-Method:", "PARTIAL_UPDATE");
+            request.Headers.Add("X-RestLi-Method", "PARTIAL_UPDATE");
 
             var content = JsonSerializer.Serialize(post, serializeOptions);
             request.Content = new StringContent(content, null, "application/json");

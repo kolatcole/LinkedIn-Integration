@@ -3,34 +3,33 @@ using System.Text.Json.Serialization;
 
 namespace LinkedIn_Integration.Entities
 {
-    public class Reaction
+    public class EntityEngagement
     {
-        [JsonPropertyName("id")]
-        public string Id { get; set; }
-        [JsonPropertyName("lastModified")]
-        public LastModified lastModified { get; set; }
-        [JsonPropertyName("reactionType")]
-        public string ReactionType { get; set; }
-        [JsonPropertyName("created")]
-        public ResponseCreated Created { get; set; }
-        [JsonPropertyName("root")]
-        public string Root { get; set; }
+        [JsonPropertyName("totalShareStatistics")]
+        public TotalShareStatistics TotalShareStatistics { get; set; }
+        [JsonPropertyName("share")]
+        public string Share { get; set; }
+        [JsonPropertyName("organizationalEntity")]
+        public string OrganizationalEntity { get; set; }
+        
 
     }
 
-    public class LastModified
+    public class TotalShareStatistics
     {
-        [JsonPropertyName("actor")]
-        public string Actor { get; set; }
-        [JsonPropertyName("time")]
-        public long Time { get; set; }
-    }
-
-    public class ResponseCreated
-    {
-        [JsonPropertyName("actor")]
-        public string Actor { get; set; }
-        [JsonPropertyName("time")]
-        public long Time { get; set; }
+        [JsonPropertyName("uniqueImpressionsCount")]
+        public int UniqueImpressionsCount { get; set; }
+        [JsonPropertyName("shareCount")]
+        public int ShareCount { get; set; }
+        [JsonPropertyName("engagement")]
+        public decimal Engagement { get; set; }
+        [JsonPropertyName("clickCount")]
+        public int ClickCount { get; set; }
+        [JsonPropertyName("likeCount")]
+        public int LikeCount { get; set; }
+        [JsonPropertyName("impressionCount")]
+        public int ImpressionCount { get; set; }
+        [JsonPropertyName("commentCount")]
+        public int CommentCount { get; set; }
     }
 }
