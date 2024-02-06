@@ -70,11 +70,21 @@ namespace LinkedIn_Integration.Services.Implementations
             request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
 
 
-            // Get the media filepaths from appsettings
+            //// Get the media filepaths from appsettings
+            //string[] filePaths;
+            //if (!string.IsNullOrEmpty(options.ImagePaths))
+            //{
+            //    filePaths = GetImageFilePaths(options.ImagePaths);
+
+            //    await AddContentToPostAsync(filePaths, post);
+
+            //}
+
+            // Get the media filepaths from json
             string[] filePaths;
-            if (!string.IsNullOrEmpty(options.ImagePaths))
+            if (!string.IsNullOrEmpty(post.Content.Media.Title))
             {
-                filePaths = GetImageFilePaths(options.ImagePaths);
+                filePaths = GetImageFilePaths(post.Content.Media.Title);
 
                 await AddContentToPostAsync(filePaths, post);
 
@@ -134,11 +144,11 @@ namespace LinkedIn_Integration.Services.Implementations
         }
         private async Task AddContentToPostAsync(string[] filePaths, Post post)
         {
+            
             ImageUploadResponse imageResponse;
             if (filePaths.Length == 1)
             {
-
-                if (IsVideo(filePaths[0]))
+                if (IsVideo(post.Content.Media.Title))
                 {
                     VideoUploadResponse mediaResponse;
                     // call {{baseUrl}}/rest/images?action=initializeUpload first to get uploadUrl
@@ -153,9 +163,9 @@ namespace LinkedIn_Integration.Services.Implementations
                         var videoUploadRequest = new HttpRequestMessage(HttpMethod.Put, mediaResponse.Value.UploadInstructions[0].UploadUrl);
                         //videoUploadRequest.Headers.Add("Authorization", options.Token);
 
-                        using (var fileStream = File.OpenRead(filePaths[0]))
+                        using (var fileStream = await DownloadMediaAsync(filePaths[0]))
                         {
-                            videoContent.Add(new StreamContent(fileStream), "file", Path.GetFileName(filePaths[0]));
+                            videoContent.Add(new StreamContent(fileStream), "file", "video1");
 
                             videoUploadRequest.Content = videoContent;
                             var videoUploadresponse = await client.SendAsync(videoUploadRequest);
@@ -196,6 +206,7 @@ namespace LinkedIn_Integration.Services.Implementations
                     post.Content = new Content();
                     post.Content.Media = new Media();
                     post.Content.Media.Id = mediaResponse.Value.Video;
+                    post.Content.MultiImage = null;
                 }
                 else
                 {
@@ -233,13 +244,7 @@ namespace LinkedIn_Integration.Services.Implementations
 
                         using (var fileStream =await DownloadMediaAsync(filePaths[0]))
                         {
-                            //// Download the image from the web
-                            //var imageStream = await client.GetStreamAsync(imageUrl);
-
-                            //// Add the image stream to the request
-                            //content.Add(new StreamContent(imageStream), "file", "uploadedImage.jpg");
-
-                            //var file
+                            
                             imageContent.Add(new StreamContent(fileStream), "file", "image1.jpg");
 
                             imageUploadRequest.Content = imageContent;
@@ -255,11 +260,13 @@ namespace LinkedIn_Integration.Services.Implementations
                     post.Content = new Content();
                     post.Content.Media = new Media();
                     post.Content.Media.Id = imageResponse.value.Image;
+                    post.Content.MultiImage = null;
                 }
 
             }
             else
             {
+                int i = 0;
                 var images = new List<Image>();
                 foreach (string path in filePaths)
                 {
@@ -273,9 +280,9 @@ namespace LinkedIn_Integration.Services.Implementations
                         var imageUploadRequest = new HttpRequestMessage(HttpMethod.Put, imageResponse.value.UploadUrl);
                         imageUploadRequest.Headers.Add("Authorization", options.Token);
 
-                        using (var fileStream = File.OpenRead(path))
+                        using (var fileStream = await DownloadMediaAsync(path))
                         {
-                            imageContent.Add(new StreamContent(fileStream), "file", Path.GetFileName(path));
+                            imageContent.Add(new StreamContent(fileStream), "file", $"image{i+=1}");
 
                             imageUploadRequest.Content = imageContent;
                             var imageUploadresponse = await client.SendAsync(imageUploadRequest);
@@ -295,7 +302,7 @@ namespace LinkedIn_Integration.Services.Implementations
                         }
                     }
                 }
-
+                post.Content.Media = null;
                 if (post.Content is null)
                     post.Content = new Content();
 
@@ -334,7 +341,8 @@ namespace LinkedIn_Integration.Services.Implementations
 
         private bool IsVideo(string path)
         {
-            return path.Split(".")[1] == "mp4";
+            var delimieter = path.Split(".")[1];
+            return (delimieter != "png") || (delimieter != "jpg") || (delimieter != "jpeg");
         }
         private async Task<Stream> DownloadMediaAsync(string url)
         {

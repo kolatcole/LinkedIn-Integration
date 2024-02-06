@@ -81,12 +81,12 @@ namespace LinkedIn_Integration.Entities
         [JsonPropertyName("media")]
         public Media? Media { get; set; }
         [JsonPropertyName("multiImage")]
-        public MultiImage MultiImage { get; set; }
+        public MultiImage? MultiImage { get; set; }
     }
     public class MultiImage
     {
         public IList<Image> Images { get; set; }
-        public string AltText { get; set; }
+        //public string AltText { get; set; }
     }
 
     public class Image
