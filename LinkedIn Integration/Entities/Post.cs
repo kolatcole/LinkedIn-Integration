@@ -108,8 +108,8 @@ namespace LinkedIn_Integration.Entities
     {
         [JsonPropertyName("commentary")]
         public string Commentary { get; set; }
-        [JsonPropertyName("contentCallToActionLabel")]
-        public string ContentCallToActionLabel { get; set; }
+        //[JsonPropertyName("contentCallToActionLabel")]
+        //public string ContentCallToActionLabel { get; set; }
     }
 //    {
 //    "patch":

@@ -19,10 +19,10 @@ namespace LinkedIn_Integration.Services.Implementations
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
         private readonly LinkedInOptions options = _options.Value;
-        public async Task<HttpResponseMessage> CreateComment(Comment comment, string postUrn)
+        public async Task<HttpResponseMessage> CreateComment(Comment comment, string postUrn, string token)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, $"{options.BaseURL}rest/socialActions/{HttpUtility.UrlEncode(postUrn)}/comments");
-            request.Headers.Add("Authorization", options.Token);
+            request.Headers.Add("Authorization",$"Bearer {token}");
             request.Headers.Add("LinkedIn-Version", "202306");
             request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
 
@@ -32,10 +32,10 @@ namespace LinkedIn_Integration.Services.Implementations
             return await Helper.ExecuteAsync(request, client);
         }
 
-        public async Task<IEnumerable<Comment>> GetComments(string Urn)
+        public async Task<IEnumerable<Comment>> GetComments(string Urn, string token)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, $"{options.BaseURL}rest/socialActions/{Urn}/comments");
-            request.Headers.Add("Authorization", options.Token);
+            request.Headers.Add("Authorization", $"Bearer {token}");
             request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
 
             var responseContent = await Helper.ExecuteAsync(request, client).Result.Content.ReadAsStringAsync();

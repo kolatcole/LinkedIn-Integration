@@ -5,6 +5,6 @@ namespace LinkedIn_Integration.Services
 {
     public interface IEntityEngagementService
     {
-        Task<EntityEngagement> GetEngagements(string entityUrn);
+        Task<EntityEngagement> GetEngagements(string entityUrn, string organizationUrn, string token);
     }
 }

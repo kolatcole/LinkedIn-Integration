@@ -62,10 +62,10 @@ namespace LinkedIn_Integration.Services.Implementations
             //return options.Owner + $"{user.Sub}";
             return options.Owner;
         }
-        public async Task<HttpResponseMessage> CreatePost(Post post)
+        public async Task<HttpResponseMessage> CreatePost(Post post, string token)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, options.BaseURL + $"rest/posts");
-            request.Headers.Add("Authorization", options.Token);
+            request.Headers.Add("Authorization", $"Bearer {token}");
             request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
             request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
 
@@ -82,7 +82,7 @@ namespace LinkedIn_Integration.Services.Implementations
 
             // Get the media filepaths from json
             string[] filePaths;
-            if (!string.IsNullOrEmpty(post.Content.Media.Title))
+            if (post.Content is not null && post.Content.Media is not null && !string.IsNullOrEmpty(post.Content.Media.Title))
             {
                 filePaths = GetImageFilePaths(post.Content.Media.Title);
 
@@ -93,10 +93,10 @@ namespace LinkedIn_Integration.Services.Implementations
             request.Content = new StringContent(content, null, "application/json");
             return await client.SendAsync(request);
         }
-        public async Task<HttpResponseMessage> ResharePost(Post post)
+        public async Task<HttpResponseMessage> ResharePost(Post post, string token)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, $"{options.BaseURL}rest/posts");
-            request.Headers.Add("Authorization", options.Token);
+            request.Headers.Add("Authorization", $"Bearer {token}");
             request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
             request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
 
@@ -105,19 +105,19 @@ namespace LinkedIn_Integration.Services.Implementations
 
             return await Helper.ExecuteAsync(request,client);
         }
-        public async Task<HttpResponseMessage> DeletePost(string Urn)
+        public async Task<HttpResponseMessage> DeletePost(string Urn, string token)
         {
             var request = new HttpRequestMessage(HttpMethod.Delete, $"{options.BaseURL}rest/posts/{HttpUtility.UrlEncode(Urn)}");
-            request.Headers.Add("Authorization", options.Token);
+            request.Headers.Add("Authorization", $"Bearer {token}");
             request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
             request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
             request.Headers.Add("X-RestLi-Method", "DELETE");
             return await Helper.ExecuteAsync(request, client);
         }
-        public async Task<Post> GetPost(string Urn)
+        public async Task<Post> GetPost(string Urn, string token)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, $"{options.BaseURL}rest/posts/{HttpUtility.UrlEncode(Urn)}");
-            request.Headers.Add("Authorization", options.Token);
+            request.Headers.Add("Authorization", $"Bearer {token}");
             request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
             request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
 
@@ -125,10 +125,10 @@ namespace LinkedIn_Integration.Services.Implementations
             return JsonSerializer.Deserialize<Post>(content);
         }
 
-        public async Task<HttpResponseMessage> UpdatePost(PostUpdate post, string urn)
+        public async Task<HttpResponseMessage> UpdatePost(PostUpdate post, string urn, string token)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, $"{options.BaseURL}rest/posts/{HttpUtility.UrlEncode(urn)}");
-            request.Headers.Add("Authorization", options.Token);
+            request.Headers.Add("Authorization", $"Bearer {token}");
             request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
             request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
             request.Headers.Add("X-RestLi-Method", "PARTIAL_UPDATE");
@@ -341,8 +341,7 @@ namespace LinkedIn_Integration.Services.Implementations
 
         private bool IsVideo(string path)
         {
-            var delimieter = path.Split(".")[1];
-            return (delimieter != "png") || (delimieter != "jpg") || (delimieter != "jpeg");
+            return !path.Contains(".jpg") && !path.Contains(".jpeg") && !path.Contains(".png");
         }
         private async Task<Stream> DownloadMediaAsync(string url)
         {

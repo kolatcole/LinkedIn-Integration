@@ -5,7 +5,7 @@ namespace LinkedIn_Integration.Services
 {
     public interface ICommentService
     {
-        Task<HttpResponseMessage> CreateComment(Comment comment, string postUrn);
-        Task<IEnumerable<Comment>> GetComments(string Urn);
+        Task<HttpResponseMessage> CreateComment(Comment comment, string postUrn, string token);
+        Task<IEnumerable<Comment>> GetComments(string Urn, string token);
     }
 }

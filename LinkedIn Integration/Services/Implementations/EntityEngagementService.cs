@@ -1,12 +1,7 @@
 ﻿using LinkedIn_Integration.Entities;
 using System.Text.Json.Serialization;
 using System.Text.Json;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using LinkedIn_Integration.HttpEntities.HttpResponses;
-using System.Xml.Linq;
-using System;
-using LinkedIn_Integration.HttpEntities.HttpRequests;
 using System.Web;
 
 namespace LinkedIn_Integration.Services.Implementations
@@ -22,10 +17,16 @@ namespace LinkedIn_Integration.Services.Implementations
         };
         private readonly LinkedInOptions options = _options.Value;
        
-        public async Task<EntityEngagement> GetEngagements(string entityUrn)
+        public async Task<EntityEngagement> GetEngagements(string entityUrn, string organizationUrn, string token)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"{options.BaseURL}rest/organizationalEntityShareStatistics?q=organizationalEntity&organizationalEntity={HttpUtility.UrlEncode(options.Owner)}&shares=List({HttpUtility.UrlEncode(entityUrn)})");
-            request.Headers.Add("Authorization", options.Token);
+            HttpRequestMessage request;
+            if(entityUrn.Contains("share"))
+                request = new HttpRequestMessage(HttpMethod.Get, $"{options.BaseURL}rest/organizationalEntityShareStatistics?q=organizationalEntity&organizationalEntity={HttpUtility.UrlEncode(organizationUrn)}&shares=List({HttpUtility.UrlEncode(entityUrn)})");
+            else
+                request = new HttpRequestMessage(HttpMethod.Get, $"{options.BaseURL}rest/organizationalEntityShareStatistics?q=organizationalEntity&organizationalEntity={HttpUtility.UrlEncode(organizationUrn)}&ugcPosts=List({HttpUtility.UrlEncode(entityUrn)})");
+
+
+            request.Headers.Add("Authorization", $"Bearer {token}");
             request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
             request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
 
@@ -39,7 +40,8 @@ namespace LinkedIn_Integration.Services.Implementations
             // Extract the "elements" array
             if (jsonResponse.RootElement.TryGetProperty("elements", out var elementsArray))
             {
-                engagements = JsonSerializer.Deserialize<EntityEngagement>(elementsArray[0]);
+                if(elementsArray.GetArrayLength() > 0)
+                    engagements = JsonSerializer.Deserialize<EntityEngagement>(elementsArray[0]);
             }
             return engagements;
         }

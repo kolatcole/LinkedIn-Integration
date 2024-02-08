@@ -12,10 +12,10 @@ namespace LinkedIn_Integration.Controllers
     [Route("[controller]")]
     public class CommentController(ICommentService service) : ControllerBase
     {
-        [HttpPost]
-        public async Task<IActionResult> Create(Comment comment, string postUrn)
+        [HttpPost("{postUrn}/{token}")]
+        public async Task<IActionResult> Create(Comment comment, string postUrn, string token)
         {
-            var response = await service.CreateComment(comment, postUrn);
+            var response = await service.CreateComment(comment, postUrn, token);
             if (response.StatusCode == HttpStatusCode.Forbidden)
                 throw new Exception("Unpermitted fields present in REQUEST_BODY");
             else if((response.StatusCode == HttpStatusCode.TooManyRequests))
@@ -26,10 +26,10 @@ namespace LinkedIn_Integration.Controllers
             return Ok(Created("", new { message = $"Comment has been created successfully for post: {postUrn} with id : {id}" }));            
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Get(string Urn)
+        [HttpGet("{token}")]
+        public async Task<IActionResult> Get(string Urn, string token)
         {
-            var response = await service.GetComments(Urn);
+            var response = await service.GetComments(Urn, token);
 
             return Ok(response);
         }

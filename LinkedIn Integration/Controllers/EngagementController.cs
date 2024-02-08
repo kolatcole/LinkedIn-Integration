@@ -9,10 +9,10 @@ namespace LinkedIn_Integration.Controllers
     [Route("[controller]")]
     public class EngagementController(ILogger<EngagementController> logger, IEntityEngagementService service) : ControllerBase
     {
-        [HttpGet]
-        public async Task<IActionResult> Get(string Urn)
+        [HttpGet("{token}/{organizationURN}/ {entityURN}")]
+        public async Task<IActionResult> Get(string entityURN, string organizationURN, string token)
         {
-            var response = await service.GetEngagements(Urn);
+            var response = await service.GetEngagements(entityURN, organizationURN, token);
 
             return Ok(response);
         }
