@@ -4,8 +4,9 @@ namespace LinkedIn_Integration.Services
 {
     public interface IAuthService
     {
-        Task<HttpResponseMessage> AuthRequest(Auth auth);
-        Task<HttpResponseMessage> TokenRequest(Auth auth);
+        Task<string> AuthRequest();
+        Task<string> GetTokens(string code);
+        Task<string> GetTokenWithRefreshToken(string refreshToken);
 
     }
 }

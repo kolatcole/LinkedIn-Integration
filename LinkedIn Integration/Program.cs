@@ -1,4 +1,5 @@
 using LinkedIn_Integration;
+using LinkedIn_Integration.Entities;
 using LinkedIn_Integration.Services;
 using LinkedIn_Integration.Services.Implementations;
 
@@ -11,9 +12,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.Configure<LinkedInOptions>(builder.Configuration.GetSection("LinkedInOptions"));
+builder.Services.Configure<AuthOptions>(builder.Configuration.GetSection("AuthOptions"));
 builder.Services.AddSingleton<IPostService, PostService>();
 builder.Services.AddSingleton<ICommentService, CommentService>();
 builder.Services.AddSingleton<IEntityEngagementService, EntityEngagementService>();
+builder.Services.AddSingleton<IAuthService, AuthService>();
 
 var app = builder.Build();
 
