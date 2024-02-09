@@ -1,5 +1,6 @@
 using LinkedIn_Integration.Entities;
 using LinkedIn_Integration.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Net;
@@ -8,6 +9,7 @@ namespace LinkedIn_Integration.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+   // [Authorize]
     public class PostController(IPostService service) : ControllerBase
     {
         [HttpPost("Create/{token}")]

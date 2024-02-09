@@ -32,6 +32,7 @@ namespace LinkedIn_Integration.Services.Implementations
             var request = new HttpRequestMessage(HttpMethod.Post, $"{options.BaseURL}oauth/v2/accessToken");
             var collection = new Dictionary<string, string>();
             collection.Add("grant_type", "authorization_code");
+
             collection.Add("code", code);
             collection.Add("client_id", authOptions.ClientId);
             collection.Add("client_secret", authOptions.Secret);
