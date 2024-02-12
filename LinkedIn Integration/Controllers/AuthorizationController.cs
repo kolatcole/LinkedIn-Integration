@@ -42,16 +42,16 @@ namespace LinkedIn_Integration.Controllers
             return Ok();
         }
         [HttpGet("Try")]
-        [Authorize(Policy = "createPost")]
+        [Authorize]
         public IActionResult Try()
         {
             return Ok();
         }
-        [HttpGet("Login")]
-        public IActionResult Login()
+        [HttpGet("Logout")]
+        public IActionResult Logout()
         {
           //  var context = _oauthHandlerService.CreatingTicketContext;
-            return Ok();
+            return Ok("Logged out");
         }
     }
 }

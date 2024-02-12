@@ -9,19 +9,21 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Microsoft.Identity.Web.Resource;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.Filters;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using System.Xml;
 using static System.Net.WebRequestMethods;
 
 
@@ -105,29 +107,24 @@ builder.Services.AddSingleton<ICommentService, CommentService>();
 builder.Services.AddSingleton<IEntityEngagementService, EntityEngagementService>();
 builder.Services.AddSingleton<IAuthService, AuthService>();
 builder.Services.AddSingleton<OAuthHandlerService>();
-//builder.Services.AddAuthentication(opt =>
-//{
-//    opt.DefaultScheme = "OAuthProvider";
-//    opt.DefaultChallengeScheme = "OAuthProvider";
-//    opt.DefaultAuthenticateScheme = "OAuthProvider";
-//}).AddOAuth("OAuthProvider", options =>
-//{
-//    options.ClientId = "77tqluk58xcp41";
-//    options.ClientSecret = "fis8HjLFXgr3XYOn";
-//    options.CallbackPath = "/https://oauth.pstmn.io/v1/callback";
-//    options.AuthorizationEndpoint = "https://www.linkedin.com/oauth/v2/authorization";
-//    options.TokenEndpoint = "https://www.linkedin.com/oauth/v2/accessToken";
-//    options.SaveTokens = true;
+builder.Services.AddDbContext<ApplicationDbContext>(opt => {
+    opt.UseSqlServer("Data Source=DESKTOP-5SRAAK8\\SQLEXPRESS;Initial Catalog=CatalogDB;Integrated Security=True;Connect Timeout=30;Encrypt=True;Trust Server Certificate=True;Application Intent=ReadWrite;Multi Subnet Failover=False");
+});
+builder.Services.AddIdentity<AppUser, IdentityRole>(opt =>
+{
 
-//});
-var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("1234567890"));
+
+}).AddRoles<IdentityRole>()
+            .AddRoleManager<RoleManager<IdentityRole>>()
+            .AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders().AddUserManager<UserManager<AppUser>>();
 
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 }).AddCookie(/*"internal_cookie",*/ options =>
 {
-    options.LoginPath = "/Account/linkedIn-login";
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
 })
 .AddOAuth("OAuthProvider", options =>
 {
@@ -184,20 +181,31 @@ builder.Services.AddAuthentication(options =>
         OnCreatingTicket = async context =>
         {
             var oauthHandlerService = context.HttpContext.RequestServices.GetRequiredService<OAuthHandlerService>();
-            var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
-            var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
-            var user = await response.Content.ReadFromJsonAsync<JsonElement>();
-            context.RunClaimActions(user);
+            //var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
+            //request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            //request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
+            //var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
+            //var linkedInUser = await response.Content.ReadFromJsonAsync<JsonElement>();
 
+
+            //string value = "{\"localizedLastName\":\"Kolawole\",\"profilePicture\":{\"displayImage\":\"urn:li:digitalmediaAsset:C4E03AQG18zzQ5Z48nA\"},\"firstName\":{\"localized\":{\"en_US\":\"Toheeb\"},\"preferredLocale\":{\"country\":\"US\",\"language\":\"en\"}},\"vanityName\":\"toheeb-kolawole\",\"lastName\":{\"localized\":{\"en_US\":\"Kolawole\"},\"preferredLocale\":{\"country\":\"US\",\"language\":\"en\"}},\"localizedHeadline\":\"Software Engineer with Azure DevOps expertise and Microsoft certifications\",\"id\":\"Mw2fYL2UDo\",\"headline\":{\"localized\":{\"en_US\":\"Software Engineer with Azure DevOps expertise and Microsoft certifications\"},\"preferredLocale\":{\"country\":\"US\",\"language\":\"en\"}},\"localizedFirstName\":\"Toheeb\"}";
+
+            //// Deserialize the value into a JObject
+            //JObject jsonObject = JObject.Parse(value);
+
+            //// Serialize the JObject back to JSON
+            //var json = JsonConvert.SerializeObject(jsonObject, Newtonsoft.Json.Formatting.Indented);
+
+            //var linkedInUser = 
+
+            //context.RunClaimActions(linkedInUser);
             var claims = new List<Claim>
             {
                 new Claim("accessToken", context.AccessToken),
                 new Claim("refreshToken", context.RefreshToken),
                 new Claim("expiryTime", context.ExpiresIn.ToString()),
                 new Claim("createPost","True")
-               // new Claim("createdAt", context.)
+                // new Claim("createdAt", context.)
 
             };
             // Create a new claim
@@ -209,21 +217,67 @@ builder.Services.AddAuthentication(options =>
 
             // Add the claim to the identity's claims collection
             ((ClaimsIdentity)context.Principal.Identity).AddClaim(createPostClaim);
-            //((ClaimsIdentity)context.Principal.Identity).AddClaim(resharePostClaim);
-            //((ClaimsIdentity)context.Principal.Identity).AddClaim(deletePostClaim);
-            //((ClaimsIdentity)context.Principal.Identity).AddClaim(getPostClaim);
-            //((ClaimsIdentity)context.Principal.Identity).AddClaim(updatePostClaim);
+            ((ClaimsIdentity)context.Principal.Identity).AddClaim(resharePostClaim);
+            ((ClaimsIdentity)context.Principal.Identity).AddClaim(deletePostClaim);
+            ((ClaimsIdentity)context.Principal.Identity).AddClaim(getPostClaim);
+            ((ClaimsIdentity)context.Principal.Identity).AddClaim(updatePostClaim);
 
 
-            //var identity = new ClaimsIdentity(claims, "OAuthProvider");
-            //context.HttpContext.User.AddIdentity(identity);
-            //// Create a claims principal using the claims identity
-            //var principal = new ClaimsPrincipal(identity);
+            var identity = new ClaimsIdentity(claims, "OAuthProvider");
+            context.HttpContext.User.AddIdentity(identity);
+            
+            // Create a claims principal using the claims identity
+            var principal = new ClaimsPrincipal(identity);
+            var user = new AppUser
+            {
+                AccessToken = context.AccessToken,
+                RefreshToken = context.RefreshToken,
+                ExpiresIn = context.ExpiresIn.ToString(),
+                UserName="Ankur"
+                //UserName = linkedInUser.GetProperty("localizedFirstName").ToString()
+            };
+
+           
+
+
+            var provider = builder.Services.BuildServiceProvider();
+            var dbContext = provider.GetRequiredService<ApplicationDbContext>();
+
+            //var userId = await dbContext.Users.AddAsync(user);
+            //var d = await dbContext.SaveChangesAsync();
+
+          
+            var userStore = new UserStore<AppUser>(dbContext);
+            IdentityOptions identityOptions = new IdentityOptions { };
+            IOptions<IdentityOptions> identityOptionsAccessor = Options.Create(identityOptions);
+            UserManager<AppUser> _userManager =new UserManager<AppUser>(userStore, null, null, null, null, null, null, null, null);
+            IUserClaimsPrincipalFactory<AppUser> userClaimsPrincipalFactory = new UserClaimsPrincipalFactory<AppUser>(_userManager, identityOptionsAccessor);
+            await userClaimsPrincipalFactory.CreateAsync(user);
+            HttpContextAccessor accessor = new HttpContextAccessor();
+            var result = await _userManager.CreateAsync(user);
+
+            SignInManager<AppUser> _signInManager = new SignInManager<AppUser>(_userManager,accessor, userClaimsPrincipalFactory, null, null, null, null);
+            await _userManager.AddClaimAsync(user, createPostClaim);
+            await _userManager.AddClaimAsync(user, resharePostClaim);
+            await _userManager.AddClaimAsync(user, updatePostClaim);
+            await _userManager.AddClaimAsync(user, deletePostClaim);
+            await _userManager.AddClaimAsync(user, getPostClaim);
+
+            var properties = new AuthenticationProperties
+            {
+                RedirectUri = "/Account/home"
+            };
+            IEnumerable<Claim> additionalClaims = new List<Claim>();
+            if (result.Succeeded)
+            {
+                await _signInManager.SignInWithClaimsAsync(user, properties, additionalClaims);
+            }
+            //Seed.SaveClaims(dbContext,d.ToString());
 
             //// Sign in the user
-            //await context.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+            await context.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
-
+            
             //var claims = result.Principal.Identities.FirstOrDefault().Claims.Select(claim => new
             //{
             //    claim.Issuer,
@@ -243,8 +297,7 @@ builder.Services.AddAuthentication(options =>
             Console.WriteLine("Ticket created");
             context.Response.Redirect("/Account/return-tokens");
             // Console.WriteLine(response.StatusCode);
-        }
-        ,
+        },
         OnTicketReceived = async context =>
         {
             Console.WriteLine("Ticket received");
@@ -260,10 +313,14 @@ builder.Services.AddAuthentication(options =>
 
     };
 });
+var provider = builder.Services.BuildServiceProvider();
+var dbContext = provider.GetRequiredService<ApplicationDbContext>();
+//builder.Services.AddAuthorization();
 builder.Services.AddAuthorization(opt =>
 {
     opt.AddPolicy("createPost", p => p.RequireClaim("createPost", "True"));
 });
+
 
 
 var app = builder.Build();
@@ -303,4 +360,43 @@ app.Run();
 public class OAuthHandlerService
 {
     public OAuthCreatingTicketContext CreatingTicketContext { get; set; }
+}
+
+public static class Seed
+{
+
+    public static void SaveClaims(ApplicationDbContext dbContext, string userId)
+    {
+        var resharePostClaim = new IdentityUserClaim<string>();
+        resharePostClaim.ClaimType = "resharePost";
+        resharePostClaim.ClaimValue = "True";
+        resharePostClaim.UserId = userId;
+
+        var createPostClaim = new IdentityUserClaim<string>();
+        createPostClaim.ClaimType = "createPost";
+        createPostClaim.ClaimValue = "True";
+        createPostClaim.UserId = userId;
+
+        var deletePostClaim = new IdentityUserClaim<string>();
+        deletePostClaim.ClaimType = "deletePost";
+        deletePostClaim.ClaimValue = "True";
+        deletePostClaim.UserId = userId;
+
+        var getPostClaim = new IdentityUserClaim<string>();
+        getPostClaim.ClaimType = "getPost";
+        getPostClaim.ClaimValue = "True";
+        getPostClaim.UserId = userId;
+
+        var updatePostClaim = new IdentityUserClaim<string>();
+        updatePostClaim.ClaimType = "updatePost";
+        updatePostClaim.ClaimValue = "True";
+        updatePostClaim.UserId = userId;
+
+        dbContext.UserClaims.AddRangeAsync(new IdentityUserClaim<string>[] {createPostClaim,resharePostClaim,
+            deletePostClaim,getPostClaim,updatePostClaim});
+        dbContext.SaveChanges();
+
+    }
+
+    
 }
