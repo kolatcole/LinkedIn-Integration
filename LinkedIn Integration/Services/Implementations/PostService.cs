@@ -89,9 +89,11 @@ namespace LinkedIn_Integration.Services.Implementations
                 await AddContentToPostAsync(filePaths, post);
 
             }
+
             var content = JsonSerializer.Serialize(post, serializeOptions);
             request.Content = new StringContent(content, null, "application/json");
-            return await client.SendAsync(request);
+
+            return await Helper.ExecuteAsync(request, client);
         }
         public async Task<HttpResponseMessage> ResharePost(Post post, string token)
         {

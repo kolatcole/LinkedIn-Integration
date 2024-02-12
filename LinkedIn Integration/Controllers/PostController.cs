@@ -2,6 +2,7 @@ using LinkedIn_Integration.Entities;
 using LinkedIn_Integration.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Identity.Web;
 using System;
 using System.Net;
 
@@ -9,53 +10,70 @@ namespace LinkedIn_Integration.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-   // [Authorize]
-    public class PostController(IPostService service) : ControllerBase
+    [Authorize]
+    public class PostController(IPostService service, OAuthHandlerService oauthHandlerService) : ControllerBase
     {
-        [HttpPost("Create/{token}")]
-        public async Task<IActionResult> Create(Post post, string token)
+        private readonly OAuthHandlerService _oauthHandlerService = oauthHandlerService;
+
+        
+        [HttpPost("Create")]
+        public async Task<IActionResult> Create(Post post)
         {
-            var response = await service.CreatePost(post, token);
+            var response = await service.CreatePost(post, _oauthHandlerService.CreatingTicketContext.AccessToken);
             if (response.StatusCode != HttpStatusCode.Created)
                 throw new Exception("Post Creation Failed");
 
-            return Ok(Created("", new { statusCode = response.StatusCode, shareUrn = response.Headers.GetValues("x-restli-id").ToArray()[0] }));            
+            return Ok(Created("", new { statusCode = response.StatusCode, shareUrn = response.Headers.GetValues("x-restli-id").ToArray()[0]}));            
         }
-        [HttpPost("Reshare/{token}")]
-        public async Task<IActionResult> Reshare(Post post, string token)
+        
+        [HttpPost("Reshare")]
+        public async Task<IActionResult> Reshare(Post post)
         {
-            var response = await service.ResharePost(post, token);
+            var response = await service.ResharePost(post, _oauthHandlerService.CreatingTicketContext.AccessToken);
             if (response.StatusCode != HttpStatusCode.Created)
                 throw new Exception("Reshare Failed");
 
             return Ok(Created("", new { statusCode = response.StatusCode, shareUrn = response.Headers.GetValues("x-restli-id").ToArray()[0] }));
         }
-        [HttpPost("Update/{Urn}/{token}")]
-        public async Task<IActionResult> Update(PostUpdate postEntity,string Urn, string token)
+       
+        [HttpPost("Update/{Urn}")]
+        public async Task<IActionResult> Update(PostUpdate postEntity,string Urn)
         {
-            var response = await service.UpdatePost(postEntity, Urn, token);
+            var response = await service.UpdatePost(postEntity, Urn, _oauthHandlerService.CreatingTicketContext.AccessToken);
             if (response.StatusCode != HttpStatusCode.NoContent)
                 throw new Exception("Update Failed");
             
             return Ok(Created("", new { statusCode = response.StatusCode, message = "Successfully Updated" }));
         }
-        [HttpDelete("{token}")]
-        public async Task<IActionResult> Delete(string Urn, string token)
+        
+        [HttpDelete]
+        public async Task<IActionResult> Delete(string Urn)
         {
-            var response = await service.DeletePost(Urn, token);
+            var response = await service.DeletePost(Urn, _oauthHandlerService.CreatingTicketContext.AccessToken);
             if (response.StatusCode != HttpStatusCode.NoContent)
                 return Ok(Created("", new {message = "Post is already deleted" }));
 
             return Ok(Created("", new { statusCode = response.StatusCode, message = "Post was deleted successfully" }));
         }
-        [HttpGet("{token}")]
-        public async Task<IActionResult> Get(string Urn, string token)
+       
+        [HttpGet]
+        public async Task<IActionResult> Get(string Urn)
         {
-            var response = await service.GetPost(Urn, token);
+            var response = await service.GetPost(Urn, _oauthHandlerService.CreatingTicketContext.AccessToken);
 
             return Ok(response);
         }
-
+        [HttpGet("Try")]
+        public IActionResult Try()
+        {
+            return Ok();
+        }
+        [AllowAnonymous]
+        [HttpGet("Test")]
+        public IActionResult Test()
+        {
+            return Ok();
+        }
 
     }
 }

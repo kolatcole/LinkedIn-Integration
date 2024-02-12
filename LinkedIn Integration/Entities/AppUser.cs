@@ -2,7 +2,11 @@
 
 namespace LinkedIn_Integration.Entities
 {
-    public class AppUser:IdentityUser
+    public class AppUser : IdentityUser
     {
+        public AppUser() 
+        {
+
+        }
     }
 }
