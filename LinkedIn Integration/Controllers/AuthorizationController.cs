@@ -3,6 +3,7 @@ using LinkedIn_Integration.Entities;
 using LinkedIn_Integration.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
@@ -10,9 +11,9 @@ namespace LinkedIn_Integration.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class AuthorizationController(OAuthHandlerService oauthHandlerService, IAuthService service) : ControllerBase
+    public class AuthorizationController(UserManager<AppUser> userManager, IAuthService service) : ControllerBase
     {
-        private readonly OAuthHandlerService _oauthHandlerService = oauthHandlerService;
+        private readonly UserManager<AppUser> _userManager = userManager;
         [HttpGet]
         public async Task<IActionResult> GetRedirectURL()
         {

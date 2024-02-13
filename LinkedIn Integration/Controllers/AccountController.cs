@@ -39,32 +39,13 @@ namespace LinkedIn_Integration.Controllers
         public async Task<IActionResult> LinkedInResponse()
         {
             var user = this.User.Identity as ClaimsIdentity;
-            //var token = HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "");
+            
             return Content("hello dear");
-            //var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            //var claims =  result.Principal.Identities.FirstOrDefault().Claims.Select(claim => new
-            //{
-            //    claim.Issuer,
-            //    claim.OriginalIssuer,
-            //    claim.Type,
-            //    claim.Value
-            //});
-            //return Ok(claims);
-            //return Redirect("https://api.linkedin.com/oauth/v2/accessToken");
-            //return Ok();
         }
         [Route("home")]
         [HttpGet]
         public async Task<IActionResult> home()
         {
-            //var creatingTicketContext = _oauthHandlerService.CreatingTicketContext;
-            //var result = await HttpContext.AuthenticateAsync("OAuthProvider"); // Authenticate using the OAuth scheme
-            //if (!result.Succeeded)
-            //{
-            //    // Handle authentication failure
-            //    return BadRequest("Authentication failed");
-            //}
-
             var context = _oauthHandlerService.CreatingTicketContext;
             return Ok(Created("", new
             {
@@ -99,8 +80,6 @@ namespace LinkedIn_Integration.Controllers
             if (user is null)
                 return NotFound();
 
-
-            //var context = HttpContext.Session.GetInt32("test");
 
             await _signInManager.SignInAsync(user, new AuthenticationProperties { }, null);
             if (!await Helper.SignInPrincipal(_signInManager.Context, token))

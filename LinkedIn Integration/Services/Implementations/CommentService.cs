@@ -34,9 +34,9 @@ namespace LinkedIn_Integration.Services.Implementations
 
         public async Task<IEnumerable<Comment>> GetComments(string Urn, string token)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"{options.BaseURL}rest/socialActions/{Urn}/comments");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{options.BaseURL}rest/socialActions/{HttpUtility.UrlEncode(Urn)}/comments");
             request.Headers.Add("Authorization", $"Bearer {token}");
-            request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
+            request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
 
             var responseContent = await Helper.ExecuteAsync(request, client).Result.Content.ReadAsStringAsync();
                 
