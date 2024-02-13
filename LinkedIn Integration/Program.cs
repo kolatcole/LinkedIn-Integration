@@ -111,18 +111,19 @@ builder.Services.AddDbContext<ApplicationDbContext>(opt => {
     opt.UseSqlServer("Data Source=DESKTOP-5SRAAK8\\SQLEXPRESS;Initial Catalog=CatalogDB;Integrated Security=True;Connect Timeout=30;Encrypt=True;Trust Server Certificate=True;Application Intent=ReadWrite;Multi Subnet Failover=False");
 });
 builder.Services.AddIdentity<AppUser, IdentityRole>(opt =>
-{
-
-
-}).AddRoles<IdentityRole>()
+{}).AddRoles<IdentityRole>()
             .AddRoleManager<RoleManager<IdentityRole>>()
             .AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders().AddUserManager<UserManager<AppUser>>();
 
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-}).AddCookie(/*"internal_cookie",*/ options =>
+}).AddCookie(options =>
 {
+    options.Cookie.Name = "AuthCookie"; 
+    options.Cookie.HttpOnly = true; 
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; 
+    options.Cookie.SameSite = SameSiteMode.Strict;
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
 })
@@ -349,7 +350,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
