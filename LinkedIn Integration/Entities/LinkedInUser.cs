@@ -5,7 +5,7 @@ namespace LinkedIn_Integration.Entities
     public class LinkedInUser
     {
         [JsonPropertyName("sub")]
-        public string Id { get; set; }
+        public string Sub { get; set; }
 
         [JsonPropertyName("email")]
         public string Email { get; set; }
