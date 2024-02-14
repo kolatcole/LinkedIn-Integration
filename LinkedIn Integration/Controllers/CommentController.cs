@@ -41,7 +41,6 @@ namespace LinkedIn_Integration.Controllers
             var token = _userManager.Users.Where(x => x.UserName == _signInManager.Context.User.Identity.Name).SingleOrDefault().AccessToken;
             var response = await service.GetComments(Urn, token);
 
-
             return Ok(response);
         }
 

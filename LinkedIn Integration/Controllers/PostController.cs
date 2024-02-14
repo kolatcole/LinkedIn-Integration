@@ -1,6 +1,7 @@
 using LinkedIn_Integration.Entities;
 using LinkedIn_Integration.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
 using System;
@@ -11,15 +12,18 @@ namespace LinkedIn_Integration.Controllers
     [ApiController]
     [Route("[controller]")]
     [Authorize]
-    public class PostController(IPostService service, OAuthHandlerService oauthHandlerService) : ControllerBase
+    public class PostController(IPostService service, UserManager<AppUser> userManager,
+                                            SignInManager<AppUser> signInManager) : ControllerBase
     {
-        private readonly OAuthHandlerService _oauthHandlerService = oauthHandlerService;
+        private readonly UserManager<AppUser> _userManager = userManager;
+        private readonly SignInManager<AppUser> _signInManager = signInManager;
 
-        
+
         [HttpPost("Create")]
         public async Task<IActionResult> Create(Post post)
         {
-            var response = await service.CreatePost(post, _oauthHandlerService.CreatingTicketContext.AccessToken);
+            var token = _userManager.Users.Where(x => x.UserName == _signInManager.Context.User.Identity.Name).SingleOrDefault().AccessToken;
+            var response = await service.CreatePost(post, token);
             if (response.StatusCode != HttpStatusCode.Created)
                 throw new Exception("Post Creation Failed");
 
@@ -29,7 +33,8 @@ namespace LinkedIn_Integration.Controllers
         [HttpPost("Reshare")]
         public async Task<IActionResult> Reshare(Post post)
         {
-            var response = await service.ResharePost(post, _oauthHandlerService.CreatingTicketContext.AccessToken);
+            var token = _userManager.Users.Where(x => x.UserName == _signInManager.Context.User.Identity.Name).SingleOrDefault().AccessToken;
+            var response = await service.ResharePost(post, token);
             if (response.StatusCode != HttpStatusCode.Created)
                 throw new Exception("Reshare Failed");
 
@@ -39,7 +44,8 @@ namespace LinkedIn_Integration.Controllers
         [HttpPost("Update/{Urn}")]
         public async Task<IActionResult> Update(PostUpdate postEntity,string Urn)
         {
-            var response = await service.UpdatePost(postEntity, Urn, _oauthHandlerService.CreatingTicketContext.AccessToken);
+            var token = _userManager.Users.Where(x => x.UserName == _signInManager.Context.User.Identity.Name).SingleOrDefault().AccessToken;
+            var response = await service.UpdatePost(postEntity, Urn, token);
             if (response.StatusCode != HttpStatusCode.NoContent)
                 throw new Exception("Update Failed");
             
@@ -49,7 +55,8 @@ namespace LinkedIn_Integration.Controllers
         [HttpDelete]
         public async Task<IActionResult> Delete(string Urn)
         {
-            var response = await service.DeletePost(Urn, _oauthHandlerService.CreatingTicketContext.AccessToken);
+            var token = _userManager.Users.Where(x => x.UserName == _signInManager.Context.User.Identity.Name).SingleOrDefault().AccessToken;
+            var response = await service.DeletePost(Urn, token);
             if (response.StatusCode != HttpStatusCode.NoContent)
                 return Ok(Created("", new {message = "Post is already deleted" }));
 
@@ -59,7 +66,8 @@ namespace LinkedIn_Integration.Controllers
         [HttpGet]
         public async Task<IActionResult> Get(string Urn)
         {
-            var response = await service.GetPost(Urn, _oauthHandlerService.CreatingTicketContext.AccessToken);
+            var token = _userManager.Users.Where(x => x.UserName == _signInManager.Context.User.Identity.Name).SingleOrDefault().AccessToken;
+            var response = await service.GetPost(Urn, token);
 
             return Ok(response);
         }

@@ -36,22 +36,9 @@ namespace LinkedIn_Integration.Controllers
 
             return Ok(response);
         }
-
-        [HttpGet("Test")]
-        public IActionResult Test()
-        {
-            return Ok();
-        }
-        [HttpGet("Try")]
-        [Authorize]
-        public IActionResult Try()
-        {
-            return Ok();
-        }
         [HttpGet("Logout")]
         public IActionResult Logout()
         {
-          //  var context = _oauthHandlerService.CreatingTicketContext;
             return Ok("Logged out");
         }
     }

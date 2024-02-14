@@ -38,9 +38,7 @@ namespace LinkedIn_Integration.Controllers
         [HttpGet]
         public async Task<IActionResult> LinkedInResponse()
         {
-            var user = this.User.Identity as ClaimsIdentity;
-            
-            return Content("hello dear");
+           return Ok();
         }
         [Route("home")]
         [HttpGet]
@@ -55,12 +53,6 @@ namespace LinkedIn_Integration.Controllers
             }));
         }
 
-        [HttpGet("Try")]
-        [Authorize]
-        public IActionResult Try()
-        {
-            return Ok();
-        }
         [Route("Logout")]
         [HttpGet]
         public async Task<IActionResult> Logout()
