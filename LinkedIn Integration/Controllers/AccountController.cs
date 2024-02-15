@@ -23,61 +23,61 @@ namespace LinkedIn_Integration.Controllers
         private readonly UserManager<AppUser> _userManager = userManager;
         private readonly ApplicationDbContext _dbContext = dbContext;
 
-        [Route("Login")]
-        [HttpGet]
-        public IActionResult LinkedInLogin()
-        {
-            var properties = new AuthenticationProperties
-            {
-                RedirectUri = Url.Action("home")
-            };
-            return Challenge(properties, "OAuthProvider");
-        }
+        //[Route("Login")]
+        //[HttpGet]
+        //public IActionResult LinkedInLogin()
+        //{
+        //    var properties = new AuthenticationProperties
+        //    {
+        //        RedirectUri = Url.Action("home")
+        //    };
+        //    return Challenge(properties, "OAuthProvider");
+        //}
 
-        [Route("linkedIn-response")]
-        [HttpGet]
-        public async Task<IActionResult> LinkedInResponse()
-        {
-           return Ok();
-        }
-        [Route("home")]
-        [HttpGet]
-        public async Task<IActionResult> home()
-        {
-            var context = _oauthHandlerService.CreatingTicketContext;
-            return Ok(Created("", new
-            {
-                accessToken = context.AccessToken,
-                refreshToken = context.RefreshToken,
-                expiresIn = context.ExpiresIn
-            }));
-        }
+        //[Route("linkedIn-response")]
+        //[HttpGet]
+        //public async Task<IActionResult> LinkedInResponse()
+        //{
+        //   return Ok();
+        //}
+        //[Route("home")]
+        //[HttpGet]
+        //public async Task<IActionResult> home()
+        //{
+        //    var context = _oauthHandlerService.CreatingTicketContext;
+        //    return Ok(Created("", new
+        //    {
+        //        accessToken = context.AccessToken,
+        //        refreshToken = context.RefreshToken,
+        //        expiresIn = context.ExpiresIn
+        //    }));
+        //}
 
-        [Route("Logout")]
-        [HttpGet]
-        public async Task<IActionResult> Logout()
-        {
-            var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            await HttpContext.SignOutAsync();
-            await _signInManager.SignOutAsync();
-            return Ok();
-        }
+        //[Route("Logout")]
+        //[HttpGet]
+        //public async Task<IActionResult> Logout()
+        //{
+        //    var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        //    await HttpContext.SignOutAsync();
+        //    await _signInManager.SignOutAsync();
+        //    return Ok();
+        //}
 
-        [Route("LoginWithToken/{token}")]
-        [HttpGet]
-        public async Task<IActionResult> LoginWithToken(string token)
-        {
-            var user = await _dbContext.Users.Where(x => x.AccessToken == token).SingleOrDefaultAsync();
+        //[Route("LoginWithToken/{token}")]
+        //[HttpGet]
+        //public async Task<IActionResult> LoginWithToken(string token)
+        //{
+        //    var user = await _dbContext.Users.Where(x => x.AccessToken == token).SingleOrDefaultAsync();
 
-            if (user is null)
-                return NotFound();
+        //    if (user is null)
+        //        return NotFound();
 
 
-            await _signInManager.SignInAsync(user, new AuthenticationProperties { }, null);
-            if (!await Helper.SignInPrincipal(_signInManager.Context, token))
-                return Unauthorized();
+        //    await _signInManager.SignInAsync(user, new AuthenticationProperties { }, null);
+        //    if (!await Helper.SignInPrincipal(_signInManager.Context, token))
+        //        return Unauthorized();
 
-            return Ok("Logged In");
-        }
+        //    return Ok("Logged In");
+        //}
     }
 }

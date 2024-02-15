@@ -1,10 +1,7 @@
 ﻿using LinkedIn_Integration.Entities;
 using System.Text.Json.Serialization;
 using System.Text.Json;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using LinkedIn_Integration.HttpEntities.HttpResponses;
-using System.Xml.Linq;
 using System.Web;
 
 namespace LinkedIn_Integration.Services.Implementations
@@ -22,7 +19,7 @@ namespace LinkedIn_Integration.Services.Implementations
         public async Task<HttpResponseMessage> CreateComment(Comment comment, string postUrn, string token)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, $"{options.BaseURL}rest/socialActions/{HttpUtility.UrlEncode(postUrn)}/comments");
-            request.Headers.Add("Authorization",$"Bearer {token}");
+            request.Headers.Add("Authorization", $"Bearer {token}");
             request.Headers.Add("LinkedIn-Version", "202306");
             request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
 
@@ -39,8 +36,8 @@ namespace LinkedIn_Integration.Services.Implementations
             request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
 
             var responseContent = await Helper.ExecuteAsync(request, client).Result.Content.ReadAsStringAsync();
-                
-                // Parse the JSON response using System.Text.Json.JsonSerializer
+
+            // Parse the JSON response using System.Text.Json.JsonSerializer
             var jsonResponse = JsonSerializer.Deserialize<JsonDocument>(responseContent);
 
             IEnumerable<Comment> comments = new List<Comment>();

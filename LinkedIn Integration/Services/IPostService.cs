@@ -4,6 +4,8 @@ namespace LinkedIn_Integration.Services
 {
     public interface IPostService
     {
+        Task<string> GetOwner();
+
         Task<HttpResponseMessage> CreatePost(Post post, string token);
         Task<HttpResponseMessage> ResharePost(Post post, string token);
         Task<HttpResponseMessage> UpdatePost(PostUpdate post, string urn, string token);

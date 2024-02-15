@@ -17,7 +17,7 @@ namespace LinkedIn_Integration.Controllers
         private readonly UserManager<AppUser> _userManager = userManager;
         private readonly SignInManager<AppUser> _signInManager = signInManager;
 
-        [HttpGet("{organizationURN}/ {entityURN}")]
+        [HttpGet("{organizationURN}/{entityURN}")]
         public async Task<IActionResult> Get(string entityURN, string organizationURN)
         {
             var token = _userManager.Users.Where(x => x.UserName == _signInManager.Context.User.Identity.Name).SingleOrDefault().AccessToken;

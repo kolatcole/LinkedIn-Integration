@@ -25,7 +25,7 @@ namespace LinkedIn_Integration.Services.Implementations
             WriteIndented = true,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
-       
+
         private async Task<ImageUploadResponse> GetImageUploadResponse()
         {
             var body = new ImageUploadRequest
@@ -37,7 +37,7 @@ namespace LinkedIn_Integration.Services.Implementations
             };
 
             var request = new HttpRequestMessage(HttpMethod.Post, options.BaseURL + "rest/images?action=initializeUpload");
-            request.Headers.Add("Authorization", options.Token);
+            request.Headers.Add("Authorization", "Bearer " + options.Token);
             request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
             request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
 
@@ -49,17 +49,19 @@ namespace LinkedIn_Integration.Services.Implementations
             var content = await Helper.ExecuteAsync(request, client).Result.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<ImageUploadResponse>(content);
         }
-        private async Task<string> GetOwner()
+        public async Task<string> GetOwner()
         {
             //var request = new HttpRequestMessage(HttpMethod.Get, options.BaseURL + "v2/userinfo");
-            //request.Headers.Add("Authorization", options.Token);
+            ////var request = new HttpRequestMessage(HttpMethod.Get, options.BaseURL + "v2/me");
+            ////var request = new HttpRequestMessage(HttpMethod.Get, options.BaseURL + "v2/emailAddress?q=members&projection=(elements*(handle~))");
+            //request.Headers.Add("Authorization", "Bearer " + options.Token);
             //request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
             //request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
 
             //var response = await Helper.ExecuteAsync(request, client).Result.Content.ReadAsStringAsync();
             //var user = JsonSerializer.Deserialize<LinkedInUser>(response);
 
-            //return options.Owner + $"{user.Sub}";
+            //return $"{user.Sub}";
             return options.Owner;
         }
         public async Task<HttpResponseMessage> CreatePost(Post post, string token)
@@ -105,7 +107,7 @@ namespace LinkedIn_Integration.Services.Implementations
             var content = JsonSerializer.Serialize(post, serializeOptions);
             request.Content = new StringContent(content, null, "application/json");
 
-            return await Helper.ExecuteAsync(request,client);
+            return await Helper.ExecuteAsync(request, client);
         }
         public async Task<HttpResponseMessage> DeletePost(string Urn, string token)
         {
@@ -123,7 +125,7 @@ namespace LinkedIn_Integration.Services.Implementations
             request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
             request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
 
-            var content = await Helper.ExecuteAsync(request,client).Result.Content.ReadAsStringAsync();
+            var content = await Helper.ExecuteAsync(request, client).Result.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<Post>(content);
         }
 
@@ -146,7 +148,7 @@ namespace LinkedIn_Integration.Services.Implementations
         }
         private async Task AddContentToPostAsync(string[] filePaths, Post post)
         {
-            
+
             ImageUploadResponse imageResponse;
             if (filePaths.Length == 1)
             {
@@ -163,7 +165,7 @@ namespace LinkedIn_Integration.Services.Implementations
                     {
                         string eTag;
                         var videoUploadRequest = new HttpRequestMessage(HttpMethod.Put, mediaResponse.Value.UploadInstructions[0].UploadUrl);
-                        //videoUploadRequest.Headers.Add("Authorization", options.Token);
+                        //videoUploadRequest.Headers.Add("Authorization","Bearer " + options.Token);
 
                         using (var fileStream = await DownloadMediaAsync(filePaths[0]))
                         {
@@ -203,7 +205,7 @@ namespace LinkedIn_Integration.Services.Implementations
                         request.Content = new StringContent(requestContent, null, "application/json");
 
 
-                        await Helper.ExecuteAsync(request,client);
+                        await Helper.ExecuteAsync(request, client);
                     }
                     post.Content = new Content();
                     post.Content.Media = new Media();
@@ -221,7 +223,7 @@ namespace LinkedIn_Integration.Services.Implementations
                     //using (var imageContent = new MultipartFormDataContent())
                     //{
                     //    var imageUploadRequest = new HttpRequestMessage(HttpMethod.Put, imageResponse.value.UploadUrl);
-                    //    imageUploadRequest.Headers.Add("Authorization", options.Token);
+                    //    imageUploadRequest.Headers.Add("Authorization", "Bearer " + options.Token);
 
                     //    using (var fileStream = File.OpenRead(filePaths[0]))
                     //    {
@@ -242,11 +244,11 @@ namespace LinkedIn_Integration.Services.Implementations
                     using (var imageContent = new MultipartFormDataContent())
                     {
                         var imageUploadRequest = new HttpRequestMessage(HttpMethod.Put, imageResponse.value.UploadUrl);
-                        imageUploadRequest.Headers.Add("Authorization", options.Token);
+                        imageUploadRequest.Headers.Add("Authorization", "Bearer " + options.Token);
 
-                        using (var fileStream =await DownloadMediaAsync(filePaths[0]))
+                        using (var fileStream = await DownloadMediaAsync(filePaths[0]))
                         {
-                            
+
                             imageContent.Add(new StreamContent(fileStream), "file", "image1.jpg");
 
                             imageUploadRequest.Content = imageContent;
@@ -280,11 +282,11 @@ namespace LinkedIn_Integration.Services.Implementations
                     using (var imageContent = new MultipartFormDataContent())
                     {
                         var imageUploadRequest = new HttpRequestMessage(HttpMethod.Put, imageResponse.value.UploadUrl);
-                        imageUploadRequest.Headers.Add("Authorization", options.Token);
+                        imageUploadRequest.Headers.Add("Authorization", "Bearer " + options.Token);
 
                         using (var fileStream = await DownloadMediaAsync(path))
                         {
-                            imageContent.Add(new StreamContent(fileStream), "file", $"image{i+=1}");
+                            imageContent.Add(new StreamContent(fileStream), "file", $"image{i += 1}");
 
                             imageUploadRequest.Content = imageContent;
                             var imageUploadresponse = await client.SendAsync(imageUploadRequest);
@@ -328,7 +330,7 @@ namespace LinkedIn_Integration.Services.Implementations
             };
 
             var request = new HttpRequestMessage(HttpMethod.Post, options.BaseURL + "rest/videos?action=initializeUpload");
-            request.Headers.Add("Authorization", options.Token);
+            request.Headers.Add("Authorization", "Bearer " + options.Token);
             request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
             request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
 

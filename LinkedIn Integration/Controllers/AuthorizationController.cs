@@ -11,10 +11,11 @@ namespace LinkedIn_Integration.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class AuthorizationController(UserManager<AppUser> userManager, IAuthService service) : ControllerBase
+    public class AuthorizationController(IAuthService service) : ControllerBase
     {
-        private readonly UserManager<AppUser> _userManager = userManager;
-        [HttpGet]
+        //private readonly UserManager<AppUser> _userManager = userManager;
+
+        [HttpGet("get_url")]
         public async Task<IActionResult> GetRedirectURL()
         {
             var response = await service.AuthRequest();
