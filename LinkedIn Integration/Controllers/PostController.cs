@@ -71,17 +71,6 @@ namespace LinkedIn_Integration.Controllers
 
             return Ok(response);
         }
-        [HttpGet("Try")]
-        public IActionResult Try()
-        {
-            return Ok();
-        }
-        [AllowAnonymous]
-        [HttpGet("Test")]
-        public IActionResult Test()
-        {
-            return Ok();
-        }
-
+       
     }
 }
