@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Reflection.PortableExecutable;
+using System.Text.Json.Serialization;
 
 namespace LinkedIn_Integration.HttpEntities.HttpRequests
 {
@@ -6,7 +7,6 @@ namespace LinkedIn_Integration.HttpEntities.HttpRequests
     {
         public InitializeVideoUploadRequest InitializeUploadRequest { get; set; }
     }
-
     public class InitializeVideoUploadRequest
     {
         public string Owner { get; set; }
@@ -19,8 +19,11 @@ namespace LinkedIn_Integration.HttpEntities.HttpRequests
         [JsonPropertyName("value")]
         public Value Value { get; set; }
     }
+
+
     public class Value
     {
+      
         [JsonPropertyName("uploadUrlsExpireAt")]
         public Int64 UploadUrlsExpireAt { get; set; }
         [JsonPropertyName("video")]
@@ -29,8 +32,8 @@ namespace LinkedIn_Integration.HttpEntities.HttpRequests
         public IList<UploadInstructions> UploadInstructions { get; set; }
         [JsonPropertyName("uploadToken")]
         public string UploadToken { get; set; }
-    }
 
+    }
     public class UploadInstructions
     {
         [JsonPropertyName("uploadUrl")]

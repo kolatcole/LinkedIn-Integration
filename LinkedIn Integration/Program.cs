@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -46,7 +47,7 @@ builder.Services.AddSingleton<IEntityEngagementService, EntityEngagementService>
 builder.Services.AddSingleton<IAuthService, AuthService>();
 builder.Services.AddSingleton<OAuthHandlerService>();
 builder.Services.AddDbContext<ApplicationDbContext>(opt => {
-    opt.UseSqlServer("Enter connectionstring here");
+    opt.UseSqlServer("ADD DB CONNECTION STRING HERE");
 });
 builder.Services.AddIdentity<AppUser, IdentityRole>(opt =>
 {}).AddRoles<IdentityRole>()
@@ -54,7 +55,9 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(opt =>
             .AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders().AddUserManager<UserManager<AppUser>>();
 var provider = builder.Services.BuildServiceProvider();
 var dbContext = provider.GetRequiredService<ApplicationDbContext>();
-var authOption = provider.GetRequiredService<AuthOptions>();
+var authOptions = new AuthOptions();
+builder.Configuration.GetSection("AuthOptions").Bind(authOptions);
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -70,8 +73,8 @@ builder.Services.AddAuthentication(options =>
 .AddOAuth("OAuthProvider", options =>
 {
     options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.ClientId = authOption.ClientId;
-    options.ClientSecret = authOption.Secret;
+    options.ClientId = authOptions.ClientId;
+    options.ClientSecret = authOptions.Secret;
     options.CallbackPath = new PathString("/Account/linkedIn-response");
     options.Scope.Add("w_member_social");
     options.Scope.Add("r_basicprofile");

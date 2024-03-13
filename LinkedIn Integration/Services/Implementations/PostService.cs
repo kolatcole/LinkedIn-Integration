@@ -1,8 +1,10 @@
 ﻿using LinkedIn_Integration.Entities;
 using LinkedIn_Integration.HttpEntities.HttpRequests;
 using LinkedIn_Integration.HttpEntities.HttpResponses;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Net;
 using System.Net.Http.Headers;
@@ -12,13 +14,18 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Web;
 using Content = LinkedIn_Integration.Entities.Content;
+using System.Net.Http;
 
 namespace LinkedIn_Integration.Services.Implementations
 {
     public class PostService(IOptions<LinkedInOptions> _options) : IPostService
     {
         private readonly LinkedInOptions options = _options.Value;
-        private readonly HttpClient client = new HttpClient();
+        private readonly HttpClient client = new HttpClient
+        {
+            Timeout = TimeSpan.FromMinutes(15)
+        };
+
         private readonly JsonSerializerOptions serializeOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -26,7 +33,7 @@ namespace LinkedIn_Integration.Services.Implementations
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
        
-        private async Task<ImageUploadResponse> GetImageUploadResponse()
+        private async Task<ImageUploadResponse> GetImageUploadResponse(string token)
         {
             var body = new ImageUploadRequest
             {
@@ -37,7 +44,7 @@ namespace LinkedIn_Integration.Services.Implementations
             };
 
             var request = new HttpRequestMessage(HttpMethod.Post, options.BaseURL + "rest/images?action=initializeUpload");
-            request.Headers.Add("Authorization", options.Token);
+            request.Headers.Add("Authorization", $"Bearer {token}");
             request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
             request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
 
@@ -86,7 +93,7 @@ namespace LinkedIn_Integration.Services.Implementations
             {
                 filePaths = GetImageFilePaths(post.Content.Media.Title);
 
-                await AddContentToPostAsync(filePaths, post);
+                await AddContentToPostAsync(filePaths, post, token);               
 
             }
 
@@ -144,7 +151,7 @@ namespace LinkedIn_Integration.Services.Implementations
         {
             return imagePaths.Split(",");
         }
-        private async Task AddContentToPostAsync(string[] filePaths, Post post)
+        private async Task AddContentToPostAsync(string[] filePaths, Post post, string token)
         {
             
             ImageUploadResponse imageResponse;
@@ -154,67 +161,76 @@ namespace LinkedIn_Integration.Services.Implementations
                 {
                     VideoUploadResponse mediaResponse;
                     // call {{baseUrl}}/rest/images?action=initializeUpload first to get uploadUrl
+                    var downloadedFile = await DownloadMediaAsync(filePaths[0]);
+                    mediaResponse = await GetVideoUploadResponse(token, downloadedFile.Content.Headers.ContentLength.Value);
 
-                    mediaResponse = await GetVideoUploadResponse();
+                    //previous video
+                    var fileStream = downloadedFile.Content.ReadAsStream();
+                    long chunkSize = 4 * 1024 * 1024;
+                    byte[] buffer = new byte[chunkSize];
+                    int bytesRead;
+                    int chunkNumber = 0;
+                    List<string> eTags = new List<string>();
 
-                    // send a put request to uploadUrl with the filepath
-
-                    using (var videoContent = new MultipartFormDataContent())
+                    while ((bytesRead = fileStream.Read(buffer, 0, buffer.Length)) > 0)
                     {
-                        string eTag;
-                        var videoUploadRequest = new HttpRequestMessage(HttpMethod.Put, mediaResponse.Value.UploadInstructions[0].UploadUrl);
-                        //videoUploadRequest.Headers.Add("Authorization", options.Token);
+                        chunkNumber++;
+                        ByteArrayContent byteContent = new ByteArrayContent(buffer, 0, bytesRead);
 
-                        using (var fileStream = await DownloadMediaAsync(filePaths[0]))
+                        // Add headers for chunked upload
+                        long startByte = (chunkNumber - 1) * chunkSize; 
+                        long endByte = startByte + bytesRead - 1; 
+                        byteContent.Headers.Add("Content-Range", $"bytes {startByte}-{endByte}/{fileStream.Length}");
+                        byteContent.Headers.Add("Content-Type", "application/octet-stream");
+
+                        // Send the chunk to the server
+                        HttpResponseMessage videoUploadresponse = await client.PostAsync(mediaResponse.Value.UploadInstructions[chunkNumber - 1].UploadUrl, byteContent);
+
+                        string eTag = videoUploadresponse.Headers.GetValues("ETag").ToArray()[0];
+                        // Check the response
+                        if (!videoUploadresponse.IsSuccessStatusCode)
                         {
-                            videoContent.Add(new StreamContent(fileStream), "file", "video1");
-
-                            videoUploadRequest.Content = videoContent;
-                            var videoUploadresponse = await client.SendAsync(videoUploadRequest);
-                            eTag = videoUploadresponse.Headers.GetValues("ETag").ToArray()[0];
-                            // Check the response
-                            if (!videoUploadresponse.IsSuccessStatusCode)
-                            {
-                                throw new HttpRequestException("Unable to upload Video");
-                            }
+                            throw new HttpRequestException("Unable to upload Video");
                         }
-
-                        var finalizeUploadRequest = new FinalizeUploadRequest
-                        {
-                            Video = mediaResponse.Value.Video,
-                            UploadedPartIds = new string[] { eTag },
-                            UploadToken = ""
-                        };
-                        var finalizeVideoUploadRequest = new FinalizeVideoUploadRequest
-                        {
-                            FinalizeUploadRequest = finalizeUploadRequest
-                        };
-
-
-                        var request = new HttpRequestMessage(HttpMethod.Post, options.BaseURL + "rest/videos?action=finalizeUpload");
-
-                        // Headers
-                        request.Headers.Add("Authorization", options.Token);
-                        request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
-                        request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
-
-                        // Request content
-                        var requestContent = JsonSerializer.Serialize(finalizeVideoUploadRequest, serializeOptions);
-                        request.Content = new StringContent(requestContent, null, "application/json");
-
-
-                        await Helper.ExecuteAsync(request,client);
+                        eTags.Add(eTag);
                     }
+                  
+                    var finalizeUploadRequest = new FinalizeUploadRequest
+                    {
+                        Video = mediaResponse.Value.Video,
+                        UploadedPartIds = eTags.ToArray(),
+                        UploadToken = ""
+                    };
+                    var finalizeVideoUploadRequest = new FinalizeVideoUploadRequest
+                    {
+                        FinalizeUploadRequest = finalizeUploadRequest
+                    };
+
+
+                    var request = new HttpRequestMessage(HttpMethod.Post, options.BaseURL + "rest/videos?action=finalizeUpload");
+
+                    // Headers
+                    request.Headers.Add("Authorization", $"Bearer {token}");
+                    request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
+                    request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
+
+                    // Request content
+                    var requestContent = JsonSerializer.Serialize(finalizeVideoUploadRequest, serializeOptions);
+                    request.Content = new StringContent(requestContent, null, "application/json");
+
+
+                    await Helper.ExecuteAsync(request, client);
                     post.Content = new Content();
                     post.Content.Media = new Media();
                     post.Content.Media.Id = mediaResponse.Value.Video;
                     post.Content.MultiImage = null;
+                   
                 }
                 else
                 {
                     // call {{baseUrl}}/rest/images?action=initializeUpload first to get uploadUrl
 
-                    imageResponse = await GetImageUploadResponse();
+                    imageResponse = await GetImageUploadResponse(token);
                     // send a put request to uploadUrl with the filepath
 
                     // upload from desktop
@@ -242,12 +258,12 @@ namespace LinkedIn_Integration.Services.Implementations
                     using (var imageContent = new MultipartFormDataContent())
                     {
                         var imageUploadRequest = new HttpRequestMessage(HttpMethod.Put, imageResponse.value.UploadUrl);
-                        imageUploadRequest.Headers.Add("Authorization", options.Token);
+                        imageUploadRequest.Headers.Add("Authorization", $"Bearer {token}");
 
-                        using (var fileStream =await DownloadMediaAsync(filePaths[0]))
+                        using (var downloadedFile =await DownloadMediaAsync(filePaths[0]))
                         {
                             
-                            imageContent.Add(new StreamContent(fileStream), "file", "image1.jpg");
+                            imageContent.Add(new StreamContent(downloadedFile.Content.ReadAsStream()), "file", "image1.jpg");
 
                             imageUploadRequest.Content = imageContent;
                             var imageUploadresponse = await client.SendAsync(imageUploadRequest);
@@ -274,17 +290,17 @@ namespace LinkedIn_Integration.Services.Implementations
                 {
                     // call {{baseUrl}}/rest/images?action=initializeUpload first to get uploadUrl
 
-                    imageResponse = await GetImageUploadResponse();
+                    imageResponse = await GetImageUploadResponse(token);
                     // send a put request to uploadUrl with the filepath of the image
 
                     using (var imageContent = new MultipartFormDataContent())
                     {
                         var imageUploadRequest = new HttpRequestMessage(HttpMethod.Put, imageResponse.value.UploadUrl);
-                        imageUploadRequest.Headers.Add("Authorization", options.Token);
+                        imageUploadRequest.Headers.Add("Authorization", $"Bearer {token}");
 
-                        using (var fileStream = await DownloadMediaAsync(path))
+                        using (var downloadedFile = await DownloadMediaAsync(path))
                         {
-                            imageContent.Add(new StreamContent(fileStream), "file", $"image{i+=1}");
+                            imageContent.Add(new StreamContent(downloadedFile.Content.ReadAsStream()), "file", $"image{i+=1}");
 
                             imageUploadRequest.Content = imageContent;
                             var imageUploadresponse = await client.SendAsync(imageUploadRequest);
@@ -315,7 +331,8 @@ namespace LinkedIn_Integration.Services.Implementations
             }
         }
 
-        private async Task<VideoUploadResponse> GetVideoUploadResponse()
+        //previous video
+        private async Task<VideoUploadResponse> GetVideoUploadResponse(string token, long fileSize)
         {
 
             var body = new VideoUploadRequest
@@ -323,12 +340,12 @@ namespace LinkedIn_Integration.Services.Implementations
                 InitializeUploadRequest = new InitializeVideoUploadRequest
                 {
                     Owner = await GetOwner(),
-                    FileSizeBytes = 1055736
+                    FileSizeBytes = fileSize
                 }
             };
 
             var request = new HttpRequestMessage(HttpMethod.Post, options.BaseURL + "rest/videos?action=initializeUpload");
-            request.Headers.Add("Authorization", options.Token);
+            request.Headers.Add("Authorization", $"Bearer {token}");
             request.Headers.Add("LinkedIn-Version", options.LinkedInVersion);
             request.Headers.Add("X-Restli-Protocol-Version", options.ProtocolVersion);
 
@@ -340,14 +357,16 @@ namespace LinkedIn_Integration.Services.Implementations
             var content = await Helper.ExecuteAsync(request, client).Result.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<VideoUploadResponse>(content);
         }
-
         private bool IsVideo(string path)
         {
             return !path.Contains(".jpg") && !path.Contains(".jpeg") && !path.Contains(".png");
         }
-        private async Task<Stream> DownloadMediaAsync(string url)
+        private async Task<HttpResponseMessage> DownloadMediaAsync(string url)
         {
-            return await client.GetStreamAsync(url);
+            //return await client.GetStreamAsync(url);
+
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            return await Helper.ExecuteAsync(request, client);
         }
     }
 }
